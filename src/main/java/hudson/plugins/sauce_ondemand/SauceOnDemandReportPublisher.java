@@ -60,6 +60,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static hudson.plugins.sauce_ondemand.SauceOnDemandBuildAction.getSauceBuildAction;
+
 /**
  * Associates Sauce OnDemand session ID to unit tests.
  *
@@ -106,7 +108,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
     public TestResultAction.Data contributeTestData(Run<?, ?> run, @Nonnull FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
         try {
             listener.getLogger().println("Starting Sauce Labs test publisher");
-            SauceOnDemandBuildAction buildAction = getBuildAction(run);
+            SauceOnDemandBuildAction buildAction = getSauceBuildAction(run);
             if (buildAction != null) {
                 processBuildOutput(run, buildAction, testResult);
                 if (buildAction.hasSauceOnDemandResults()) {
@@ -138,7 +140,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
         try
         {
             buildListener.getLogger().println("Starting Sauce Labs test publisher");
-            SauceOnDemandBuildAction buildAction = getBuildAction(build);
+            SauceOnDemandBuildAction buildAction = getSauceBuildAction(build);
             if (buildAction != null) {
                 processBuildOutput(build, buildAction, testResult);
                 if (buildAction.hasSauceOnDemandResults()) {
@@ -281,7 +283,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
     }
 
     protected SauceREST getSauceREST(Run build) {
-        SauceCredentials credentials = getBuildAction(build).getCredentials();
+        SauceCredentials credentials = getSauceBuildAction(build).getCredentials();
         return new JenkinsSauceREST(credentials.getUsername(), credentials.getApiKey().getPlainText());
     }
 
@@ -331,20 +333,6 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
             }
         }
         return null;
-    }
-
-    /**
-     * @param build The build in progress
-     * @return the {@link SauceOnDemandBuildAction} instance which has been registered with the build
-     *         Can be null
-     */
-    private SauceOnDemandBuildAction getBuildAction(Run build) {
-        SauceOnDemandBuildAction buildAction = build.getAction(SauceOnDemandBuildAction.class);
-        if (buildAction == null && build instanceof MavenBuild) {
-            //try the parent
-            buildAction = ((MavenBuild) build).getParentBuild().getAction(SauceOnDemandBuildAction.class);
-        }
-        return buildAction;
     }
 
     /**
