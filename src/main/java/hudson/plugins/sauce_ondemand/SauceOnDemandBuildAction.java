@@ -8,6 +8,7 @@ import hudson.model.Action;
 import hudson.model.BuildableItemWithBuildWrappers;
 import hudson.model.Job;
 import hudson.model.Run;
+import hudson.maven.MavenBuild;
 import hudson.plugins.sauce_ondemand.credentials.SauceCredentials;
 import jenkins.tasks.SimpleBuildStep;
 import org.json.JSONArray;
@@ -113,7 +114,7 @@ public class SauceOnDemandBuildAction extends AbstractAction implements SimpleBu
      */
     private static SauceOnDemandBuildAction getBuildAction(Run build) {
         SauceOnDemandBuildAction buildAction = build.getAction(SauceOnDemandBuildAction.class);
-        if (buildAction == null && build instanceof hudson.maven.MavenBuild) {
+        if (buildAction == null && build instanceof MavenBuild) {
             //try the parent
             buildAction = ((hudson.maven.MavenBuild) build).getParentBuild().getAction(SauceOnDemandBuildAction.class);
         }
