@@ -60,7 +60,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static hudson.plugins.sauce_ondemand.SauceOnDemandBuildAction.getSauceBuildAction;
+import hudson.plugins.sauce_ondemand.SauceOnDemandBuildAction;
 
 /**
  * Associates Sauce OnDemand session ID to unit tests.
@@ -108,7 +108,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
     public TestResultAction.Data contributeTestData(Run<?, ?> run, @Nonnull FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
         try {
             listener.getLogger().println("Starting Sauce Labs test publisher");
-            SauceOnDemandBuildAction buildAction = getSauceBuildAction(run);
+            SauceOnDemandBuildAction buildAction = SauceOnDemandBuildAction.getSauceBuildAction(run);
             if (buildAction != null) {
                 processBuildOutput(run, buildAction, testResult);
                 if (buildAction.hasSauceOnDemandResults()) {
@@ -140,7 +140,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
         try
         {
             buildListener.getLogger().println("Starting Sauce Labs test publisher");
-            SauceOnDemandBuildAction buildAction = getSauceBuildAction(build);
+            SauceOnDemandBuildAction buildAction = SauceOnDemandBuildAction.getSauceBuildAction(build);
             if (buildAction != null) {
                 processBuildOutput(build, buildAction, testResult);
                 if (buildAction.hasSauceOnDemandResults()) {
@@ -283,7 +283,7 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
     }
 
     protected SauceREST getSauceREST(Run build) {
-        SauceCredentials credentials = getSauceBuildAction(build).getCredentials();
+        SauceCredentials credentials = SauceOnDemandBuildAction.getSauceBuildAction(build).getCredentials();
         return new JenkinsSauceREST(credentials.getUsername(), credentials.getApiKey().getPlainText());
     }
 
