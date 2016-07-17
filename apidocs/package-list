@@ -1,0 +1,4 @@
+com.saucelabs.hudson
+com.saucelabs.jenkins.pipeline
+hudson.plugins.sauce_ondemand
+hudson.plugins.sauce_ondemand.credentials
