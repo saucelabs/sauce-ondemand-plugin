@@ -361,7 +361,7 @@ public class SauceBuildWrapperTest {
     public void mavenBuild() throws Exception {
         SauceOnDemandBuildWrapper sauceBuildWrapper = new TestSauceOnDemandBuildWrapper(credentialsId);
 
-        MavenModuleSet project = jenkinsRule.createProject(MavenModuleSet.class, "mavenBuildProject");
+        MavenModuleSet project = jenkinsRule.jenkins.createProject(MavenModuleSet.class, "mavenBuildProject");
         project.getBuildWrappersList().add(sauceBuildWrapper);
         project.setScm(new SingleFileSCM("pom.xml",getClass().getResource("/pom.xml")));
         project.setGoals("clean");
