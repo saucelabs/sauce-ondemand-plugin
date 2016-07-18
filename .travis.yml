@@ -5,9 +5,9 @@ cache:
   directories:
   - $HOME/.m2/repository
 jdk:
-- oraclejdk8
 - oraclejdk7
 - openjdk7
+#- oraclejdk8
 before_install:
 - pip install --user codecov
 after_success:
