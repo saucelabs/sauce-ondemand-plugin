@@ -13,6 +13,6 @@ after_success:
 - $HOME/.local/bin/codecov
 - chmod +x .utility/push-to-jenkins-repo.sh
 - .utility/push-to-jenkins-repo.sh
-- bash -c '[ "$TRAVIS_BRANCH" == "upgrade-base-plugin" ] && mvn site --settings settings.xml'
+- bash -c '[ "$TRAVIS_BRANCH" == "upgrade-base-plugin" ] && mvn site --settings .utility/travis-settings.xml'
 env:
   secure: G2tmyUPotaE+PtsqGAYXfIRuo+jni/rJGyG+X9kBxoFjtnOb5xpTS+oELTeCenN2EO/Y08rBbGiwiT69NKIZEkHLrWyanSvyNVCNCw+90Jgohw0Fs16gnbxM6dw/G7Hhhux6YLsmccz9mp4ROm27PAiFzY7lkfSP2R1T0Oh1usGsZg+CTMUoOlJry1KI7HrxUMBgEAWN16iM+hoF8ZXmQoVfxeth4ftwYhgBBtBd6ffF/WOmRdYYupxW5mBWVNFk//9xAJM0JnGQ9u7i+HGdCgCYuiKlW5ePXMyWommVeGbLGa3DDfIebAeKkGpzDTNWoXYYyF5A4+YmCSdSHBsxFDr60k4dBQi22Kh8GujCEIoLpF3pIvK8MwNCFKgVII4/rHo2FWqIQqrtokHFrGeQKc+wkdPNoO3ouMzxgnGZdj1dZNLy0uq1H4hKBeU+uMvEMHCFRPYLAyVO/IDxqKA+Xt5jgAadrww3kNno6XfPgxBMriXYaZpjWuwQD32f0RyDUatexnc/VOSXkilLWeuFkt6sceMSmGZAd2fDRMqxdmCFsPvowEncROgUKBJMwpRwo7tY9PpnP7flPipGaJOWFsTL6iMW4/3Dv8zTrpuKo6BaX6nyb5Uih2QMCcoS2iuoCGN9QnIwxCyy1kASGWpbaOV19JZXUp8nXqYD6/6aItE=
