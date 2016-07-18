@@ -7,6 +7,8 @@
         <relativePath/>
     </parent>
     <properties>
+        <!-- don't run in parallel -->
+        <concurrency>1C</concurrency>
         <github.global.server>github</github.global.server>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>1.609.2</jenkins.version>
@@ -129,6 +131,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=380m</argLine>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>${concurrency}</forkCount>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
