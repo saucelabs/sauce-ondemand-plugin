@@ -7,6 +7,7 @@
         <relativePath/>
     </parent>
     <properties>
+        <github.global.server>github</github.global.server>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>1.609.2</jenkins.version>
         <!-- Java Level to use. Java 7 required when using core >= 1.612 -->
@@ -154,6 +155,9 @@
                 <version>0.12</version>
                 <configuration>
                     <message>Creating site for ${project.version}</message>
+                    <repositoryName>jenkins-sauce-ondemand-plugin</repositoryName>
+                    <repositoryOwner>saucelabs</repositoryOwner>
+                    <server>github</server>
                 </configuration>
                 <executions>
                     <execution>
@@ -321,12 +325,17 @@
         </pluginRepository>
     </pluginRepositories>
     <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.4</version>
-            </plugin>
-        </plugins>
+	<plugins>
+	    <plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>findbugs-maven-plugin</artifactId>
+		<version>3.0.4</version>
+	    </plugin>
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-changelog-plugin</artifactId>
+		<version>2.3</version>
+	    </plugin>
+	</plugins>
     </reporting>
 </project>
