@@ -359,9 +359,10 @@ public class SauceOnDemandBuildWrapper extends BuildWrapper implements Serializa
                     maxRetries, retryWaitTime
                 );
 
-                if (launchSauceConnectOnSlave) {
+                Computer computer = Computer.currentComputer();
+                if (computer != null && launchSauceConnectOnSlave) {
                     listener.getLogger().println("Starting Sauce Connect on slave node using tunnel identifier: " + tunnelIdentifier);
-                    Computer.currentComputer().getChannel().call(sauceConnectStarter);
+                    computer.getChannel().call(sauceConnectStarter);
 
                 } else {
                     listener.getLogger().println("Starting Sauce Connect on master node using identifier: " + AbstractSauceTunnelManager.getTunnelIdentifier(resolvedOptions, "default"));
@@ -580,9 +581,12 @@ public class SauceOnDemandBuildWrapper extends BuildWrapper implements Serializa
      */
     private static String getCurrentHostName() {
         try {
-            String hostName = Computer.currentComputer().getHostName();
-            if (hostName != null) {
-                return hostName;
+            Computer computer = Computer.currentComputer();
+            if (computer != null) {
+                String hostName = computer.getHostName();
+                if (hostName != null) {
+                    return hostName;
+                }
             }
         } catch (Exception e) {
             //shouldn't happen
@@ -632,8 +636,9 @@ public class SauceOnDemandBuildWrapper extends BuildWrapper implements Serializa
             if (isEnableSauceConnect()) {
                 if (isUseGeneratedTunnelIdentifier()) {
                     try {
-                        if (launchSauceConnectOnSlave) {
-                            return Computer.currentComputer().getChannel().call(new GetAvailablePort());
+                        Computer computer = Computer.currentComputer();
+                        if (computer != null && launchSauceConnectOnSlave) {
+                            return computer.getChannel().call(new GetAvailablePort());
                         } else {
                             return new GetAvailablePort().call();
                         }

@@ -202,14 +202,23 @@ public class SauceOnDemandReportPublisher extends TestDataPublisher {
 
         LinkedList<TestIDDetails> testIds = new LinkedList<TestIDDetails>();
 
+        BufferedReader in = null;
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(build.getLogInputStream()));
+            in = new BufferedReader(new InputStreamReader(build.getLogInputStream()));
             String line;
             while ((line = in.readLine()) != null) {
                 testIds.addAll(processSessionIds(true, line));
             }
         } catch (IOException e) {
             logger.severe(e.getMessage());
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    logger.severe(e.getMessage());
+                }
+            }
         }
 
         //try the stdout for the tests
