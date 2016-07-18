@@ -29,19 +29,41 @@
     <name>Jenkins Sauce OnDemand plugin</name>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Sauce+OnDemand+Plugin</url>
 
+    <issueManagement>
+        <system>JIRA</system>
+        <url>https://issues.jenkins-ci.org/browse/JENKINS</url>
+    </issueManagement>
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/sauce-ondemand-plugin.git</connection>
+        <connection>scm:git:https://github.com/jenkinsci/sauce-ondemand-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/sauce-ondemand-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/sauce-ondemand-plugin</url>
         <tag>HEAD</tag>
     </scm>
 
     <developers>
-      <developer>
-        <id>halkeye</id>
-        <name>Gavin Mogan</name>
-        <email>gavin@saucelabs.com</email>
-      </developer>
+        <developer>
+            <id>halkeye</id>
+            <name>Gavin Mogan</name>
+            <email>gavin@saucelabs.com</email>
+            <organization>Sauce Labs</organization>
+            <organizationUrl>http://www.saucelabs.com/</organizationUrl>
+            <timezone>America/Vancouver</timezone>
+        </developer>
+        <developer>
+            <id>moizjv</id>
+            <name>Moiz Virani</name>
+            <email>moiz@saucelabs.comx </email>
+            <organization>Sauce Labs</organization>
+            <organizationUrl>http://www.saucelabs.com/</organizationUrl>
+            <timezone>America/Los_Angeles</timezone>
+        </developer>
     </developers>
+    <contributors>
+        <contributor>
+            <name>Ross Rowe</name>
+            <email>piaross@gmail.com</email>
+        </contributor>
+    </contributors>
 
     <distributionManagement>
         <repository>
