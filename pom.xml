@@ -42,7 +42,10 @@
         <url>https://github.com/jenkinsci/sauce-ondemand-plugin</url>
         <tag>HEAD</tag>
     </scm>
-
+    <ciManagement>
+        <system>jenkins</system>
+        <url>https://jenkins.ci.cloudbees.com/job/plugins/job/sauce-ondemand-plugin/</url>
+    </ciManagement>
     <developers>
         <developer>
             <id>halkeye</id>
