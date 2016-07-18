@@ -7,6 +7,7 @@ import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sauce_ondemand.credentials.SauceCredentials;
 import net.sf.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,10 +47,7 @@ public class ParameterizedSauceBuildWrapperTest {
             boolean enableSauceConnect,
             boolean launchSauceConnectOnSlave,
             boolean useGeneratedTunnelIdentifier,
-            boolean verboseLogging,
-            boolean useLatestVersion,
-            String seleniumPort,
-            String seleniumHost
+            boolean verboseLogging
     ) throws Exception {
         super();
         sauceBuildWrapper = new TestSauceOnDemandBuildWrapper(null);
@@ -57,9 +55,6 @@ public class ParameterizedSauceBuildWrapperTest {
         sauceBuildWrapper.setLaunchSauceConnectOnSlave(launchSauceConnectOnSlave);
         sauceBuildWrapper.setUseGeneratedTunnelIdentifier(useGeneratedTunnelIdentifier);
         sauceBuildWrapper.setVerboseLogging(verboseLogging);
-        sauceBuildWrapper.setUseLatestVersion(useLatestVersion);
-        sauceBuildWrapper.setSeleniumPort(seleniumPort);
-        sauceBuildWrapper.setSeleniumHost(seleniumHost);
     }
 
     @Parameterized.Parameters
@@ -69,21 +64,12 @@ public class ParameterizedSauceBuildWrapperTest {
             for(boolean launchSauceConnectOnSlave : new boolean[] { true, false }) {
                 for (boolean useGeneratedTunnelIdentifier : new boolean[]{true, false}) {
                     for (boolean verboseLogging : new boolean[]{true, false}) {
-                        for (boolean useLatestVersion : new boolean[]{true, false}) {
-                            for (String seleniumPort : new String[]{"", "4444"}) {
-                                for (String seleniumHost : new String[]{"", "localhost"}) {
-                                    list.add(new Object[]{
-                                            enableSauceConnect,
-                                            launchSauceConnectOnSlave,
-                                            useGeneratedTunnelIdentifier,
-                                            verboseLogging,
-                                            useLatestVersion,
-                                            seleniumPort,
-                                            seleniumHost
-                                    });
-                                }
-                            }
-                        }
+                        list.add(new Object[]{
+                                enableSauceConnect,
+                                launchSauceConnectOnSlave,
+                                useGeneratedTunnelIdentifier,
+                                verboseLogging
+                        });
                     }
                 }
             }
@@ -120,6 +106,11 @@ public class ParameterizedSauceBuildWrapperTest {
 
         jenkinsRule.getPluginManager().getPlugin("sauce-ondemand").getPlugin().configure(null, pluginConfig);
 
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        storeDummyManager(null);
     }
 
     private void storeDummyManager(SauceConnectFourManager sauceConnectFourManager) throws Exception {
@@ -180,37 +171,36 @@ public class ParameterizedSauceBuildWrapperTest {
 
         Map<String, String> envVars = (Map<String, String>)holder.get("env");
         assertNotNull(envVars);
-        if (envVars != null) {
-            assertEquals("legacy SAUCE_USER_NAME is set to API username", "fakeuser", envVars.get("SAUCE_USER_NAME"));
-            assertEquals("proper SAUCE_USERNAME is set to API username", "fakeuser", envVars.get("SAUCE_USERNAME"));
-            assertEquals("legacy SAUCE_API_KEY is set to API username", "fakekey", envVars.get("SAUCE_API_KEY"));
-            assertEquals("proper SAUCE_ACCESS_KEY is set to API username", "fakekey", envVars.get("SAUCE_ACCESS_KEY"));
-            assertThat("SELENIUM_HOST equals something", envVars.get("SELENIUM_HOST"), not(isEmptyOrNullString()));
-            assertThat("SELENIUM_PORT equals something", envVars.get("SELENIUM_PORT"), not(isEmptyOrNullString()));
-            assertThat("JENKINS_BUILD_NUMBER equals something", envVars.get("JENKINS_BUILD_NUMBER"), not(isEmptyOrNullString()));
 
-            if (!"".equals(sauceBuildWrapper.getNativeAppPackage())) {
-                assertNull("SAUCE_NATIVE_APP is not set when native package is not set", envVars.get("SAUCE_NATIVE_APP"));
-            } else {
-                assertThat("SAUCE_NATIVE_APP is set when native package is set", envVars.get("SAUCE_NATIVE_APP"), not(isEmptyOrNullString()));
-            }
-            if (sauceBuildWrapper.isEnableSauceConnect() && sauceBuildWrapper.isUseGeneratedTunnelIdentifier()) {
-                assertThat("TUNNEL_IDENTIFIER is set when we are managing it", envVars.get("TUNNEL_IDENTIFIER"), not(isEmptyOrNullString()));
+        assertEquals("legacy SAUCE_USER_NAME is set to API username", "fakeuser", envVars.get("SAUCE_USER_NAME"));
+        assertEquals("proper SAUCE_USERNAME is set to API username", "fakeuser", envVars.get("SAUCE_USERNAME"));
+        assertEquals("legacy SAUCE_API_KEY is set to API username", "fakekey", envVars.get("SAUCE_API_KEY"));
+        assertEquals("proper SAUCE_ACCESS_KEY is set to API username", "fakekey", envVars.get("SAUCE_ACCESS_KEY"));
+        assertThat("SELENIUM_HOST equals something", envVars.get("SELENIUM_HOST"), not(isEmptyOrNullString()));
+        assertThat("SELENIUM_PORT equals something", envVars.get("SELENIUM_PORT"), not(isEmptyOrNullString()));
+        assertThat("JENKINS_BUILD_NUMBER equals something", envVars.get("JENKINS_BUILD_NUMBER"), not(isEmptyOrNullString()));
 
-            } else {
-                assertNull("TUNNEL_IDENTIFIER is not set when we are not managing it", envVars.get("SAUCE_NATIVE_APP"));
-
-            }
-            if (sauceBuildWrapper.isUseChromeForAndroid()) {
-                assertNull("SAUCE_USE_CHROME is not set when use chrome is not set", envVars.get("SAUCE_USE_CHROME"));
-            } else {
-                assertThat("SAUCE_USE_CHROME is set when use chrome is set", envVars.get("SAUCE_USE_CHROME"), not(isEmptyOrNullString()));
-            }
-            /*
-            SELENIUM_PLATFORM, SELENIUM_BROWSER, SELENIUM_VERSION, SELENIUM_DRIVER, SELENIUM_DEVICE, SELENIUM_DEVICE_TYPE, SELENIUM_DEVICE_ORIENTATION
-            SAUCE_ONDEMAND_BROWSERS
-            */
+        if (!"".equals(sauceBuildWrapper.getNativeAppPackage())) {
+            assertNull("SAUCE_NATIVE_APP is not set when native package is not set", envVars.get("SAUCE_NATIVE_APP"));
+        } else {
+            assertThat("SAUCE_NATIVE_APP is set when native package is set", envVars.get("SAUCE_NATIVE_APP"), not(isEmptyOrNullString()));
         }
+        if (sauceBuildWrapper.isEnableSauceConnect() && sauceBuildWrapper.isUseGeneratedTunnelIdentifier()) {
+            assertThat("TUNNEL_IDENTIFIER is set when we are managing it", envVars.get("TUNNEL_IDENTIFIER"), not(isEmptyOrNullString()));
+
+        } else {
+            assertNull("TUNNEL_IDENTIFIER is not set when we are not managing it", envVars.get("SAUCE_NATIVE_APP"));
+
+        }
+        if (sauceBuildWrapper.isUseChromeForAndroid()) {
+            assertNull("SAUCE_USE_CHROME is not set when use chrome is not set", envVars.get("SAUCE_USE_CHROME"));
+        } else {
+            assertThat("SAUCE_USE_CHROME is set when use chrome is set", envVars.get("SAUCE_USE_CHROME"), not(isEmptyOrNullString()));
+        }
+        /*
+        SELENIUM_PLATFORM, SELENIUM_BROWSER, SELENIUM_VERSION, SELENIUM_DRIVER, SELENIUM_DEVICE, SELENIUM_DEVICE_TYPE, SELENIUM_DEVICE_ORIENTATION
+        SAUCE_ONDEMAND_BROWSERS
+        */
     }
 
     private FreeStyleBuild runFreestyleBuild(SauceOnDemandBuildWrapper sauceBuildWrapper, TestBuilder builder, Node slave) throws Exception {
@@ -232,7 +222,7 @@ public class ParameterizedSauceBuildWrapperTest {
     /**
      * Dummy builder which is run by the unit tests.
      */
-    private class SauceBuilder extends TestBuilder implements Serializable {
+    private static class SauceBuilder extends TestBuilder implements Serializable {
 
         @Override
         public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {

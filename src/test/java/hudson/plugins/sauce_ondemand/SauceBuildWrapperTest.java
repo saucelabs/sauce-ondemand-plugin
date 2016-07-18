@@ -12,16 +12,21 @@ import hudson.model.*;
 import hudson.model.queue.QueueTaskFuture;
 import hudson.plugins.sauce_ondemand.credentials.SauceCredentials;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.SlaveComputer;
+import hudson.tasks.BuildWrapper;
 import hudson.tasks.Maven;
 import hudson.tasks.junit.JUnitResultArchiver;
 import hudson.tasks.junit.TestDataPublisher;
 import hudson.util.DescribableList;
 import net.sf.json.JSONObject;
+import org.acegisecurity.AccessDeniedException;
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.ToolInstallations;
 import org.jvnet.hudson.test.SingleFileSCM;
 import org.jvnet.hudson.test.TestBuilder;
 import org.mockito.invocation.InvocationOnMock;
@@ -32,19 +37,17 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import java.lang.reflect.*;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Ross Rowe
@@ -71,15 +74,12 @@ public class SauceBuildWrapperTest {
 
     public static final String DEFAULT_TEST_XML = "/hudson/plugins/sauce_ondemand/test-result.xml";
 
-    private String currentSessionId = DEFAULT_SESSION_ID;
-
-    private String currentTestResultFile = DEFAULT_TEST_XML;
     private String credentialsId;
 
     @Before
     public void setUp() throws Exception {
         SystemCredentialsProvider.getInstance().save();
-        jenkinsRule.configureDefaultMaven("apache-maven-3.0.1", Maven.MavenInstallation.MAVEN_30);
+        ToolInstallations.configureDefaultMaven("apache-maven-3.0.1", Maven.MavenInstallation.MAVEN_30);
 
         this.credentialsId = SauceCredentials.migrateToCredentials("fakeuser", "fakekey", "unittest");
 
@@ -131,6 +131,11 @@ public class SauceBuildWrapperTest {
         EnvVars envVars = prop.getEnvVars();
         envVars.put("TEST_PORT_VARIABLE_4321", "4321");
         this.jenkinsRule.getInstance().getGlobalNodeProperties().add(prop);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        storeDummyManager(null);
     }
 
     private void storeDummyManager(SauceConnectFourManager sauceConnectFourManager) throws Exception {
@@ -242,7 +247,7 @@ public class SauceBuildWrapperTest {
         SauceOnDemandBuildWrapper sauceBuildWrapper = new TestSauceOnDemandBuildWrapper(credentialsId);
         sauceBuildWrapper.setWebDriverBrowsers(Arrays.asList("", ""));  /// THIS Actually crashes the buld but things are not properly checked
 
-        SauceBuilder sauceBuilder = new SauceBuilder() {
+        SauceBuilder sauceBuilder = new SauceBuilder(DEFAULT_TEST_XML) {
             @Override
             public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
                 //verify that SAUCE_ environment variables are populated
@@ -281,7 +286,7 @@ public class SauceBuildWrapperTest {
         };
 
         storeDummyManager(sauceConnectFourManager);
-        SauceBuilder sauceBuilder = new SauceBuilder() {
+        SauceBuilder sauceBuilder = new SauceBuilder(DEFAULT_TEST_XML) {
             @Override
             public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
                 Map<String, String> envVars = build.getEnvironment(listener);
@@ -327,7 +332,7 @@ public class SauceBuildWrapperTest {
         };
 
         storeDummyManager(sauceConnectFourManager);
-        SauceBuilder sauceBuilder = new SauceBuilder() {
+        SauceBuilder sauceBuilder = new SauceBuilder(DEFAULT_TEST_XML) {
             @Override
             public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
                 Map<String, String> envVars = build.getEnvironment(listener);
@@ -354,7 +359,7 @@ public class SauceBuildWrapperTest {
     public void mavenBuild() throws Exception {
         SauceOnDemandBuildWrapper sauceBuildWrapper = new TestSauceOnDemandBuildWrapper(credentialsId);
 
-        MavenModuleSet project = jenkinsRule.createMavenProject();
+        MavenModuleSet project = jenkinsRule.jenkins.createProject(MavenModuleSet.class, "mavenBuildProject");
         project.getBuildWrappersList().add(sauceBuildWrapper);
         project.setScm(new SingleFileSCM("pom.xml",getClass().getResource("/pom.xml")));
         project.setGoals("clean");
@@ -364,11 +369,66 @@ public class SauceBuildWrapperTest {
         jenkinsRule.assertBuildStatusSuccess(build);
     }
 
+    @Test
+    public void testSetUpEnv() throws Exception {
+        AbstractBuild build = mock(AbstractBuild.class);
+        Launcher launcher = mock(Launcher.class);
+        BuildListener listener = mock(BuildListener.class);
+        PrintStream logger = mock(PrintStream.class);
+
+        AbstractProject project = mock(AbstractProject.class);
+
+        when(listener.getLogger()).thenReturn(logger);
+        when(build.getProject()).thenReturn(project);
+        when(project.getName()).thenReturn("testSetupEnv");
+        when(build.getFullDisplayName()).thenReturn("testSetupEnv");
+
+
+        ArrayList<SauceOnDemandBuildWrapper> sauceBuildWrappers = new ArrayList<SauceOnDemandBuildWrapper>();
+
+        for(boolean enableSauceConnect : new boolean[] {true, false }) {
+            for(boolean launchSauceConnectOnSlave : new boolean[] { true, false }) {
+                for (boolean useGeneratedTunnelIdentifier : new boolean[]{true, false}) {
+                    for (boolean verboseLogging : new boolean[]{true, false}) {
+                        for (String seleniumPort : new String[]{"", "4444"}) {
+                            for (String seleniumHost : new String[]{"", "localhost"}) {
+                                SauceOnDemandBuildWrapper sauceBuildWrapper = new TestSauceOnDemandBuildWrapper(credentialsId);
+                                sauceBuildWrapper.setEnableSauceConnect(enableSauceConnect);
+                                sauceBuildWrapper.setLaunchSauceConnectOnSlave(launchSauceConnectOnSlave);
+                                sauceBuildWrapper.setUseGeneratedTunnelIdentifier(useGeneratedTunnelIdentifier);
+                                sauceBuildWrapper.setVerboseLogging(verboseLogging);
+                                sauceBuildWrapper.setSeleniumPort(seleniumPort);
+                                sauceBuildWrapper.setSeleniumHost(seleniumHost);
+                                sauceBuildWrappers.add(sauceBuildWrapper);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (SauceOnDemandBuildWrapper sauceBuildWrapper : sauceBuildWrappers) {
+            Map<String, String> envVars = new HashMap<>();
+            sauceBuildWrapper.setUp(build, launcher, listener).buildEnvVars(envVars);
+
+            assertEquals("legacy SAUCE_USER_NAME is set to API username", "fakeuser", envVars.get("SAUCE_USER_NAME"));
+            assertEquals("proper SAUCE_USERNAME is set to API username", "fakeuser", envVars.get("SAUCE_USERNAME"));
+            assertEquals("legacy SAUCE_API_KEY is set to API username", "fakekey", envVars.get("SAUCE_API_KEY"));
+            assertEquals("proper SAUCE_ACCESS_KEY is set to API username", "fakekey", envVars.get("SAUCE_ACCESS_KEY"));
+            assertThat("SELENIUM_HOST equals something", envVars.get("SELENIUM_HOST"), not(isEmptyOrNullString()));
+            assertThat("SELENIUM_PORT equals something", envVars.get("SELENIUM_PORT"), not(isEmptyOrNullString()));
+            assertThat("JENKINS_BUILD_NUMBER equals something", envVars.get("JENKINS_BUILD_NUMBER"), not(isEmptyOrNullString()));
+        }
+
+    }
+
+
+
     /* FIXME - move to setup() */
     private FreeStyleBuild runFreestyleBuild(SauceOnDemandBuildWrapper sauceBuildWrapper, TestBuilder builder, Node node) throws Exception {
 
         if (builder == null) {
-            builder = new SauceBuilder();
+            builder = new SauceBuilder(DEFAULT_TEST_XML);
         }
         FreeStyleProject freeStyleProject = jenkinsRule.createFreeStyleProject();
         if (node != null) {
@@ -400,7 +460,13 @@ public class SauceBuildWrapperTest {
     /**
      * Dummy builder which is run by the unit tests.
      */
-    private class SauceBuilder extends TestBuilder implements Serializable {
+    private static class SauceBuilder extends TestBuilder implements Serializable {
+
+        String currentTestResultFile;
+        public SauceBuilder(String currentTestResultFile) {
+            super();
+            this.currentTestResultFile = currentTestResultFile;
+        }
 
         @Override
         public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {

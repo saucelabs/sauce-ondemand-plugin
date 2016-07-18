@@ -19,7 +19,6 @@ import static org.junit.Assert.assertNotNull;
 public class SauceOnDemandProjectActionTest {
 
     private SecurityRealm securityRealm;
-    private AuthorizationStrategy authStrategy;
     private String credentialsId;
 
     private SecurityRealm getSecurityRealm() {
